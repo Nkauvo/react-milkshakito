@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MilkShakito - Menu & Delivery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        principal: '#fdabac',
+                        cinza: '#666666',
+                        'fundo-footer': '#bad0ff',
+                    },
+                    fontFamily: { barlow: ['Barlow', 'sans-serif'] },
+                    keyframes: {
+                        flutuar: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-40px)' },
+                        }
+                    },
+                    animation: { flutuar: 'flutuar 4s ease-in-out infinite' }
+                }
+            }
+        }
+    </script>
+
+    <!-- config pwa -->
+     <link rel="stylesheet" href="manifest.json">
+     <meta name="theme-color" content="#ca3c3f">
+     <meta name="apple-mobile-web-app-capable" content="yes">
+     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+     <link rel="apple-touch-icon" href="assets/images/logopwa.png">
+     <link rel="icon" type="image/png" sizes="32x32" href="assets/images/logopwa.png">
+     <link rel="stylesheet" type="image/png" sizes="16x16" href="assets/images/logopwa.png">
+     <link rel="stylesheet" type="image/png" href="assets/images/logopwa.png">
+     <link rel="shortcut icon" href="assets/images/logopwa.png" type="image/x-icon">
+     <meta name="msappaplication-TileImage" content="assets/images/logopwa.png">
+     <meta property="og:image" content="assets/images/logopwa.png">
+     <!-- termino -->
+
+    <style>
+        /* Slogan aparece com animação ao passar o mouse na logo */
+        .slogan-header { opacity: 0; transform: translateX(-20px); max-width: 0; overflow: hidden; transition: all 0.5s ease-in-out; white-space: nowrap; }
+        .logo-wrapper:hover .slogan-header { opacity: 1; transform: translateX(0); max-width: 650px; }
+
+        /* Estilo base do botão hamburguer (3 barras) */
+        .hamburger {
+            width: 30px;
+            height: 24px;
+            position: relative;
+            cursor: pointer;
+            z-index: 100;
+        }
+        .hamburger span {
+            display: block;
+            width: 100%;
+            height: 3px;
+            background-color: #333;
+            border-radius: 3px;
+            position: absolute;
+            transition: all 0.4s ease-in-out;
+            transform-origin: center;
+        }
+        /* Posições das 3 barrinhas do hamburguer */
+        .hamburger span:nth-child(1) { top: 0; }
+        .hamburger span:nth-child(2) { top: 10px; }
+        .hamburger span:nth-child(3) { top: 20px; }
+
+        /* Quando o menu está aberto (.active), as barras giram e formam um X */
+        .hamburger.active span:nth-child(1) { top: 10px; transform: rotate(45deg); }
+        .hamburger.active span:nth-child(2) { opacity: 0; transform: translateX(-20px); }
+        .hamburger.active span:nth-child(3) { top: 10px; transform: rotate(-45deg); }
+
+        /* Menu lateral que desliza da direita no mobile */
+        @media (max-width: 1023px) {
+            .nav-menu {
+                position: fixed;
+                right: -100%;       /* começa escondido fora da tela */
+                top: 0;
+                width: 75%;
+                height: 100vh;
+                background-color: white;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                gap: 2rem;
+                transition: 0.4s ease;
+                z-index: 50;
+                box-shadow: -10px 0 30px rgba(0,0,0,0.1);
+            }
+            .nav-menu.active { right: 0; } /* entra na tela quando ativo */
+
+            /* Fundo escuro atrás do menu mobile */
+            #overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 40; }
+            #overlay.active { display: block; }
+
+            /* Container de Swipe para deslizar entre categorias no mobile */
+            #swipe-outer-container { overflow: hidden; width: 100%; }
+            .category-panel { flex: 0 0 100%; min-width: 100%; padding: 0 20px; box-sizing: border-box; }
+        }
+
+        /* Remove o highlight azul ao tocar em itens do menu no celular */
+        .menu-item { transition: background-color 0.2s; -webkit-tap-highlight-color: transparent; }
+
+        /* 
+           ADICIONADO: Estilos de transição do Modal de Detalhes
+           O modal usa opacity para aparecer/sumir suavemente
+           e scale para dar o efeito de "crescer" na tela. */
+        #detalhes-modal {
+            transition: opacity 0.3s ease;
+        }
+        #detalhes-modal-content {
+            transition: transform 0.3s ease;
+        }
+    </style>
+</head>
+<body class="font-barlow text-[#222222] bg-white overflow-x-hidden">
+
+    <!-- Fundo escuro para fechar o menu mobile ao clicar fora -->
+    <div id="overlay"></div>
+
+    <!-- Botão flutuante do carrinho (aparece no canto inferior esquerdo quando há itens) -->
+    <div id="cart-btn" class="fixed bottom-6 left-6 z-[100] bg-principal text-white p-4 rounded-full shadow-2xl cursor-pointer flex items-center gap-2 transition-transform hover:scale-110 hidden">
+        <i class="fa-solid fa-cart-shopping text-xl"></i>
+        <span id="cart-count" class="font-bold text-lg">0</span>
+    </div>
+
+    <!-- Botão flutuante do WhatsApp (canto inferior direito) -->
+    <a href="https://wa.me/5515987654321" target="_blank" class="fixed right-4 bottom-4 z-[100] hover:scale-110 transition-transform">
+        <img src="./assets/images/whatsapp.png" alt="WhatsApp" class="h-14 w-auto drop-shadow-lg">
+    </a>
+
+    <!--  HEADER  -->
+    <header class="sticky top-0 z-[60] bg-white px-4 py-4 lg:px-8 lg:shadow-sm">
+        <div class="lg:max-w-[1200px] lg:mx-auto flex justify-between items-center">
+
+            <!-- Logo + slogan (slogan aparece só no desktop ao passar o mouse) -->
+            <div class="logo-wrapper flex items-center gap-4 cursor-default">
+                <img src="./assets/images/logoshake.png" alt="Logo" class="w-32 lg:w-[140px]">
+                <span class="slogan-header hidden lg:block font-semibold text-principal text-sm italic">Cremosidade em cada detalhe.</span>
+            </div>
+
+            <!-- Botão hamburguer: visível apenas no mobile (lg:hidden) -->
+            <button class="hamburger lg:hidden" id="hamburger-btn">
+                <span></span><span></span><span></span>
+            </button>
+
+            <!-- Menu de navegação: sidebar no mobile, inline no desktop -->
+            <nav class="nav-menu lg:block">
+                <ul class="flex flex-col lg:flex-row list-none font-bold text-center gap-6 lg:gap-0">
+                    <li><a href="#cardapio" class="nav-link block text-xl lg:text-base hover:text-principal lg:ml-8">CARDÁPIO</a></li>
+                    <li><button id="cart-menu-link" class="nav-link block w-full text-xl lg:text-base hover:text-principal lg:ml-8 uppercase">CARRINHO</button></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!--  BANNER  -->
+        <section class="flex flex-col items-center text-center px-4 py-12 lg:flex-row lg:justify-between lg:max-w-[1200px] lg:mx-auto lg:py-20">
+            <div class="lg:w-1/2 lg:text-left">
+                <h1 class="text-4xl lg:text-6xl font-bold leading-tight mb-6">O Shake que você <span class="text-principal italic">sempre sonhou.</span></h1>
+                <p class="text-xl text-cinza mb-8">Artesanal, cremoso e irresistível.</p>
+                <a href="#cardapio" class="border-2 border-[#333] rounded-xl py-3 px-10 font-bold uppercase hover:bg-[#333] hover:text-white transition-all shadow-lg inline-block">Ver Cardápio</a>
+            </div>
+            <!-- Imagem com animação de flutuar (definida no tailwind.config acima) -->
+            <div class="lg:w-1/2 flex justify-center mt-12 lg:mt-0">
+                <img src="./assets/images/shakes.png" alt="Milkshake" class="w-full max-w-[320px] lg:max-w-[550px] animate-flutuar">
+            </div>
+        </section>
+
+        <!-- CARDÁPIO -->
+        <!--
+            ATUALIZADO: Cardápio agora é 100% dinâmico.
+            Os itens não estão mais escritos no HTML.
+            O JavaScript busca os produtos da API e monta
+            os cards automaticamente com imagem, nome,
+            descrição e preço vindos do Supabase.
+        -->
+        <section id="cardapio" class="px-4 py-10 lg:max-w-[1100px] lg:mx-auto">
+            <h2 class="text-center text-3xl font-bold mb-10">Nosso Menu</h2>
+
+            <!--
+                Container dos painéis de categoria.
+                No desktop: grid 2 colunas.
+                No mobile: painéis deslizáveis com swipe.
+                Os painéis são criados dinamicamente pelo JS
+                com base nas categorias retornadas pela API.
+            -->
+            <div id="swipe-outer-container">
+                <div id="react-root" class="w-full">
+
+                    <!--
+                        Estado de carregamento (loading).
+                        Fica visível enquanto a API ainda não respondeu.
+                        O JS remove esse elemento ao renderizar os produtos.
+                    -->
+                </div>
+            </div>
+
+            <!--
+                Bolinhas indicadoras de painel (dots).
+                Ficam escondidas até a API carregar.
+                O JS as exibe e ajusta a quantidade conforme
+                o número de categorias retornadas.
+            -->
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-fundo-footer text-center py-12 mt-20">
+        <h3 class="font-bold text-white text-2xl mb-2">MilkShakito</h3>
+        <p class="text-[#333] text-sm">&copy; 2026 - O melhor milkshake de Sorocaba.</p>
+    </footer>
+
+    <!--
+        ADICIONADO: Modal de Detalhes do Produto
+
+        Este modal abre quando o usuário clica em qualquer
+        item do cardápio. Ele mostra a imagem, nome, preço,
+        descrição e o botão para adicionar ao carrinho.
+
+        Começa invisível (opacity-0 + pointer-events-none).
+        O JavaScript remove essas classes para exibi-lo.
+    -->
+    <div id="detalhes-modal"
+        class="fixed inset-0 bg-black/70 z-[80] flex justify-center items-center opacity-0 pointer-events-none transition-opacity duration-300 px-4">
+
+        <div id="detalhes-modal-content"
+            class="bg-white w-full max-w-[400px] rounded-[30px] overflow-hidden transform scale-95 transition-transform duration-300 relative flex flex-col">
+
+            <!-- Botão de fechar o modal (chama fecharModalDetalhes()) -->
+            <button onclick="fecharModalDetalhes()"
+                class="absolute top-4 right-4 bg-white/80 backdrop-blur-md text-gray-800 w-10 h-10 rounded-full flex justify-center items-center font-bold text-2xl shadow-sm z-10 hover:text-principal active:scale-90 transition-all">
+                &times;
+            </button>
+
+            <!-- Área da imagem do produto (src preenchido pelo JS) -->
+            <div class="w-full h-[240px] bg-gray-50 flex justify-center items-center p-8 relative">
+                <div class="absolute inset-0 bg-gradient-to-b from-gray-100 to-white opacity-50"></div>
+                <img id="detalhes-img" src="" alt="Produto"
+                    class="w-full h-full object-contain drop-shadow-xl relative z-10 transition-transform duration-500 hover:scale-105">
+            </div>
+
+            <!-- Área de texto e botão (todos preenchidos dinamicamente pelo JS) -->
+            <div class="p-6">
+                <h2 id="detalhes-nome" class="text-3xl font-black text-gray-800 mb-1 leading-tight tracking-tight">Nome do Produto</h2>
+                <p id="detalhes-preco" class="text-2xl font-black text-principal mb-4">R$ 0,00</p>
+                <div class="bg-gray-50 rounded-xl p-4 mb-6">
+                    <p id="detalhes-desc" class="text-gray-600 text-sm leading-relaxed font-medium">Descrição do produto...</p>
+                </div>
+
+                <!-- onclick definido dinamicamente no JS para cada produto clicado -->
+                <button id="detalhes-btn-add"
+                    class="w-full bg-principal text-white py-4 rounded-xl text-[17px] font-extrabold shadow-lg hover:brightness-105 active:scale-[0.98] transition-all outline-none flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-plus"></i>
+                    Adicionar ao Pedido
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!--
+        MODAL DO CARRINHO
+
+        CORREÇÃO: O modal precisa de "flex" para centralizar
+        o conteúdo quando estiver visível. Antes só tinha
+        "hidden", então ao remover "hidden" nada aparecia
+        centralizado. Agora o JS alterna entre hidden e flex.
+    -->
+    <div id="cart-modal" class="fixed inset-0 bg-black/50 z-[150] hidden items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-3xl w-full max-w-lg p-6 shadow-2xl relative">
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2 text-gray-800">
+                <i class="fa-solid fa-cart-shopping text-principal"></i> Seu Pedido
+            </h2>
+
+            <!-- Itens do carrinho são injetados aqui pelo JS -->
+            <div id="cart-items" class="max-h-[350px] overflow-y-auto mb-6 space-y-4 pr-2"></div>
+
+            <div class="border-t border-gray-100 pt-5 mb-6 flex justify-between font-bold text-xl">
+                <span class="text-gray-600">Total:</span>
+                <span id="cart-total-value" class="text-principal">R$ 0,00</span>
+            </div>
+
+        <input type="text" id="cliente-nome" placeholder="Seu Nome Completo" class="w-full mb-3 p-3 border border-gray-300 rounded-lg outline-none focus:border-primary">
+        <input type="text" id="cliente-endereco" placeholder="Endereço de Entrega (Rua, Número, Bairro)" class="w-full mb-4 p-3 border border-gray-300 rounded-lg outline-none focus:border-primary">
+            <!-- Campo para o usuário informar o nome antes de finalizar -->
+            <!-- <div class="space-y-4 mb-6">
+                <input type="text" id="user-name" placeholder="Informe seu nome"
+                    class="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-principal transition-all">
+            </div> -->
+
+            <!-- campo para o usuario colocar o endereço -->
+            <!-- <div class="space-y-4 mb-6">
+                <input type="text" id="user-address" placeholder="Informe seu endereço"
+                    class="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:border-principal transition-all">
+            </div> -->
+
+            <div class="flex gap-4">
+                <button id="close-cart" class="flex-1 py-4 bg-gray-100 text-gray-600 rounded-2xl font-bold hover:bg-gray-200 transition-all">Voltar</button>
+                <button id="checkout-btn" class="flex-[2] py-4 bg-principal text-white rounded-2xl font-bold shadow-lg hover:brightness-105 transition-all">Concluir Pedido</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="./src/legacy.js"></script>
+    <script type="module" src="./src/main.jsx"></script>
+</body>
+</html>
