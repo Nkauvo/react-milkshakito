@@ -12,3 +12,5 @@ O cardápio é renderizado pelo componente React `src/App.jsx` e lê a tabela `p
 4. Execute `npm install`, `npm run build` e `npx cap sync android`. Para desenvolvimento no navegador, use `npm run dev`.
 
 O Vite incorpora as variáveis `VITE_` no JavaScript enviado ao dispositivo. `.env.local` fica fora do Git, mas a chave publicável pode ser extraída do aplicativo. A proteção dos dados depende das políticas RLS do Supabase. Após alterar o `.env.local`, gere e sincronize o aplicativo novamente.
+
+O build do GitHub Actions usa `.env.production`, que contém somente a URL e a chave publicável do Supabase. Essas informações já ficam acessíveis dentro do APK; nunca coloque chaves `service_role` ou `sb_secret_...` nesse arquivo.
